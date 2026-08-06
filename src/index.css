@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, .font-display {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* visible keyboard focus */
+button:focus-visible, [role="button"]:focus-visible {
+  outline: 3px solid #ffc93c;
+  outline-offset: 3px;
+}
+
+.bg-sky-field {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255,255,255,0.6) 0, rgba(255,255,255,0) 40%),
+    linear-gradient(180deg, #eaf6ff 0%, #d3f8e0 100%);
+}
