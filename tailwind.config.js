@@ -25,8 +25,11 @@ export default {
           500: '#ffc93c',
         },
         berry: {
+          50: '#fff0f4',
+          100: '#ffd9e3',
           400: '#ff6f91',
           500: '#ef476f',
+          600: '#d43259',
         },
       },
       fontFamily: {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { generateMathQuestion } from '../data/mathData'
 import { getScienceQuestions } from '../data/scienceData'
+import { generateGeographyRound } from '../data/geographyData'
 import DotArray from './DotArray'
 
 const QUESTIONS_PER_ROUND = 8
@@ -18,6 +19,11 @@ const THEME = {
     topicLabel: 'text-sky-500',
     choiceIdle: 'bg-sky-50 border-sky-300 text-sky-700 hover:bg-sky-100',
     nextButton: 'bg-sky-500 hover:bg-sky-600',
+  },
+  berry: {
+    topicLabel: 'text-berry-500',
+    choiceIdle: 'bg-berry-50 border-berry-400 text-berry-500 hover:bg-berry-100',
+    nextButton: 'bg-berry-500 hover:bg-berry-600',
   },
 }
 
@@ -48,13 +54,16 @@ function buildScienceRound(grade) {
   }))
 }
 
-export default function Quiz({ subject, mathConfig, scienceGrade, onCorrect, onWrong, onFinish, onExit }) {
+export default function Quiz({ subject, mathConfig, scienceGrade, geographyTopic, onCorrect, onWrong, onFinish, onExit }) {
   const questions = useMemo(() => {
     if (subject === 'math') {
       return buildMathRound(mathConfig.mode, mathConfig.tables)
     }
+    if (subject === 'geography') {
+      return generateGeographyRound(geographyTopic, QUESTIONS_PER_ROUND)
+    }
     return buildScienceRound(scienceGrade)
-  }, [subject, mathConfig, scienceGrade])
+  }, [subject, mathConfig, scienceGrade, geographyTopic])
 
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState(null)
@@ -64,7 +73,7 @@ export default function Quiz({ subject, mathConfig, scienceGrade, onCorrect, onW
   const isLast = index === questions.length - 1
   const answered = selected !== null
   const isCorrect = answered && selected === q.answer
-  const theme = THEME[subject === 'math' ? 'leaf' : 'sky']
+  const theme = THEME[subject === 'math' ? 'leaf' : subject === 'geography' ? 'berry' : 'sky']
 
   function handleSelect(choice) {
     if (answered) return
@@ -138,10 +147,10 @@ export default function Quiz({ subject, mathConfig, scienceGrade, onCorrect, onW
                 <p className="font-display font-bold text-gray-700 mb-2">
                   The answer is {q.answer}
                 </p>
-                {q.type !== 'science' && q.visual && (
+                {(q.type === 'multiplication' || q.type === 'division') && q.visual && (
                   <DotArray rows={q.visual.rows} cols={q.visual.cols} />
                 )}
-                {q.type !== 'science' && (
+                {(q.type === 'multiplication' || q.type === 'division') && (
                   <p className="font-body text-sm text-gray-600 mt-1">
                     {q.type === 'division'
                       ? `${q.visual.total} things split into ${q.visual.rows} equal groups makes ${q.answer} in each group.`

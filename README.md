@@ -6,19 +6,25 @@ a first name, pick a subject, and practice with instant, visual feedback.
 
 ## What's inside
 
-- **Math**: multiplication and division practice, with tiered times-table
-  levels (Starter → Times Table Master) so your kid can build up from
-  2s/5s/10s instead of jumping straight into the full 1–12 grid. Wrong
-  answers show a dot-array visual (rows × columns) so the answer isn't just
-  handed over — it's shown.
-- **Science**: multiple-choice fun facts for grades 2–5, grouped by topic
-  (plants/animals, habitats, matter, weather, life cycles, energy,
-  ecosystems, space, etc.) — the same general topic areas used in
-  California's NGSS-based curriculum (which Fremont Unified follows via its
-  Amplify Science program).
+- **Math**: addition, subtraction, multiplication, and division, all
+  generated on the fly so questions never run out. Multiplication has
+  tiered times-table levels (Starter → Times Table Master) so your kid can
+  build up from 2s/5s/10s instead of jumping straight into the full 1–12
+  grid. Wrong answers show a dot-array visual (rows × columns) so the
+  answer isn't just handed over — it's shown.
+- **Science**: multiple-choice fun facts for grades 2–5 (12 questions per
+  grade), grouped by topic (plants/animals, habitats, matter, weather, life
+  cycles, energy, ecosystems, space, etc.) — the same general topic areas
+  used in California's NGSS-based curriculum (which Fremont Unified follows
+  via its Amplify Science program). Add more anytime in
+  `src/data/scienceData.js`.
+- **Geography**: World Capitals and US States & Capitals, also generated on
+  the fly from a name/capital list, so this doesn't run dry either.
 - **Stars & streaks**: 1 star per correct answer, bonus stars for finishing
   a round strong, and a "best streak" counter to chase.
-- Bright green/blue, rounded, playful UI with a bouncy "pop" feel on
+- **Switch player**: a "Not you? Switch player" link on the home screen lets
+  a different kid log in with their own name on the same device.
+- Bright green/blue/pink, rounded, playful UI with a bouncy "pop" feel on
   buttons — built with Tailwind CSS.
 
 ## Run it locally
@@ -40,7 +46,8 @@ using your existing Supabase project:
 
    ```sql
    create table progress (
-     player text primary key,
+     row_key text primary key,
+     display_name text not null,
      stars int not null default 0,
      best_streak int not null default 0,
      updated_at timestamp with time zone default now()
@@ -50,8 +57,22 @@ using your existing Supabase project:
      on progress for all using (true) with check (true);
    ```
 
-   (This is a simple single-family app with no login system, so the policy
-   is wide open. If you ever add real accounts, tighten this.)
+   `row_key` combines the kid's typed name with a random id generated for
+   their browser, so if you share this with friends, two kids who happen to
+   type the same first name won't overwrite each other's stars.
+   `display_name` is what actually shows up if you ever build a leaderboard.
+
+   > **Already created a `progress` table with a `player` column from an
+   > earlier version?** Drop it and re-run the SQL above (`drop table
+   > progress;` first) — the old rows were just this one kid's test data
+   > anyway.
+
+   ⚠️ **Heads up on sharing:** there's no login system here, just a typed
+   name. The anon key that talks to this table ships inside the app's code,
+   which is normal for a simple app like this but does mean anyone
+   technically inclined could read the whole `progress` table. That's fine
+   for first names and star counts, just don't store anything sensitive in
+   it.
 
 2. Copy `.env.example` to `.env` and fill in your project's URL and anon key
    from Supabase → Project Settings → API.

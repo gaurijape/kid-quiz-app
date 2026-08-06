@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function Home({ player, onSetPlayer, onPickSubject }) {
+export default function Home({ player, onSetPlayer, onPickSubject, onSwitchPlayer }) {
   const [nameInput, setNameInput] = useState('')
 
   if (!player) {
@@ -47,14 +47,14 @@ export default function Home({ player, onSetPlayer, onPickSubject }) {
       </h1>
       <p className="font-body text-gray-600 mb-10">What do you want to practice?</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-md">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 w-full max-w-2xl">
         <button
           onClick={() => onPickSubject('math')}
           className="group flex flex-col items-center gap-3 bg-leaf-500 hover:bg-leaf-600 text-white rounded-3xl py-10 px-6 shadow-pop active:shadow-none active:translate-y-1 transition"
         >
           <span className="text-5xl group-hover:animate-wiggle" aria-hidden="true">🔢</span>
           <span className="font-display font-extrabold text-2xl">Math</span>
-          <span className="font-body text-sm text-leaf-50">Times tables &amp; division</span>
+          <span className="font-body text-sm text-leaf-50">Times tables &amp; more</span>
         </button>
 
         <button
@@ -65,7 +65,23 @@ export default function Home({ player, onSetPlayer, onPickSubject }) {
           <span className="font-display font-extrabold text-2xl">Science</span>
           <span className="font-body text-sm text-sky-50">Fun facts to explore</span>
         </button>
+
+        <button
+          onClick={() => onPickSubject('geography')}
+          className="group flex flex-col items-center gap-3 bg-berry-500 hover:bg-berry-600 text-white rounded-3xl py-10 px-6 shadow-pop active:shadow-none active:translate-y-1 transition"
+        >
+          <span className="text-5xl group-hover:animate-wiggle" aria-hidden="true">🗺️</span>
+          <span className="font-display font-extrabold text-2xl">Geography</span>
+          <span className="font-body text-sm text-berry-50">Capitals &amp; maps</span>
+        </button>
       </div>
+
+      <button
+        onClick={onSwitchPlayer}
+        className="mt-10 font-body text-sm text-gray-400 hover:text-gray-600 underline"
+      >
+        Not {player}? Switch player
+      </button>
     </div>
   )
 }

@@ -2,9 +2,7 @@ import { MULTIPLICATION_TIERS } from '../data/mathData'
 
 const GRADES = [2, 3, 4, 5]
 
-export default function Picker({ subject, onBack, onStartMath, onStartScience }) {
-  const accent = subject === 'math' ? 'leaf' : 'sky'
-
+export default function Picker({ subject, onBack, onStartMath, onStartScience, onStartGeography }) {
   return (
     <div className="flex flex-col items-center min-h-screen bg-sky-field px-6 py-10">
       <button
@@ -14,7 +12,7 @@ export default function Picker({ subject, onBack, onStartMath, onStartScience })
         ← Back
       </button>
 
-      {subject === 'math' ? (
+      {subject === 'math' && (
         <>
           <h2 className="font-display text-3xl font-extrabold text-leaf-700 mb-6 text-center">
             Pick your challenge
@@ -22,14 +20,16 @@ export default function Picker({ subject, onBack, onStartMath, onStartScience })
 
           <div className="w-full max-w-sm mb-8">
             <p className="font-display font-bold text-gray-600 mb-2">Skill</p>
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <ModeButton label="Addition" emoji="➕" onClick={() => onStartMath('addition', null)} />
+              <ModeButton label="Subtraction" emoji="➖" onClick={() => onStartMath('subtraction', null)} />
               <ModeButton label="Multiplication" emoji="✖️" onClick={() => onStartMath('multiplication', null)} />
               <ModeButton label="Division" emoji="➗" onClick={() => onStartMath('division', null)} />
             </div>
           </div>
 
           <div className="w-full max-w-sm">
-            <p className="font-display font-bold text-gray-600 mb-2">Or pick a table level</p>
+            <p className="font-display font-bold text-gray-600 mb-2">Or pick a times-table level</p>
             <div className="flex flex-col gap-3">
               {MULTIPLICATION_TIERS.map((tier) => (
                 <button
@@ -43,7 +43,9 @@ export default function Picker({ subject, onBack, onStartMath, onStartScience })
             </div>
           </div>
         </>
-      ) : (
+      )}
+
+      {subject === 'science' && (
         <>
           <h2 className="font-display text-3xl font-extrabold text-sky-700 mb-6 text-center">
             Pick your grade
@@ -58,6 +60,30 @@ export default function Picker({ subject, onBack, onStartMath, onStartScience })
                 Grade {g}
               </button>
             ))}
+          </div>
+        </>
+      )}
+
+      {subject === 'geography' && (
+        <>
+          <h2 className="font-display text-3xl font-extrabold text-berry-500 mb-6 text-center">
+            Pick a map to explore
+          </h2>
+          <div className="flex flex-col gap-4 w-full max-w-sm">
+            <button
+              onClick={() => onStartGeography('world')}
+              className="bg-white hover:bg-berry-50 border-2 border-berry-400 rounded-2xl py-8 flex flex-col items-center gap-2 font-display font-extrabold text-xl text-berry-500 shadow-popSmall active:translate-y-1 active:shadow-none transition"
+            >
+              <span className="text-4xl" aria-hidden="true">🌍</span>
+              World Capitals
+            </button>
+            <button
+              onClick={() => onStartGeography('us_states')}
+              className="bg-white hover:bg-berry-50 border-2 border-berry-400 rounded-2xl py-8 flex flex-col items-center gap-2 font-display font-extrabold text-xl text-berry-500 shadow-popSmall active:translate-y-1 active:shadow-none transition"
+            >
+              <span className="text-4xl" aria-hidden="true">🗺️</span>
+              US States &amp; Capitals
+            </button>
           </div>
         </>
       )}

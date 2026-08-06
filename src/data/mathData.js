@@ -63,8 +63,33 @@ export function generateDivisionQuestion(tables) {
   }
 }
 
+export function generateAdditionQuestion() {
+  const a = randInt(1, 50)
+  const b = randInt(1, 50)
+  const answer = a + b
+  return {
+    type: 'addition',
+    prompt: `${a} + ${b} = ?`,
+    answer,
+    choices: buildChoices(answer, 0, 999),
+  }
+}
+
+export function generateSubtractionQuestion() {
+  const a = randInt(1, 50)
+  const b = randInt(0, a) // keep it non-negative for a 2nd grader
+  const answer = a - b
+  return {
+    type: 'subtraction',
+    prompt: `${a} - ${b} = ?`,
+    answer,
+    choices: buildChoices(answer, 0, 999),
+  }
+}
+
 export function generateMathQuestion(mode, tables) {
-  return mode === 'division'
-    ? generateDivisionQuestion(tables)
-    : generateMultiplicationQuestion(tables)
+  if (mode === 'division') return generateDivisionQuestion(tables)
+  if (mode === 'addition') return generateAdditionQuestion()
+  if (mode === 'subtraction') return generateSubtractionQuestion()
+  return generateMultiplicationQuestion(tables)
 }

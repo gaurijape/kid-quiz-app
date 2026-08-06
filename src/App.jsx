@@ -19,9 +19,10 @@ function loadLocal() {
 export default function App() {
   const [player, setPlayer] = useState(() => localStorage.getItem('brainburst_player') || '')
   const [screen, setScreen] = useState('home') // home | picker | quiz | result
-  const [subject, setSubject] = useState(null) // 'math' | 'science'
+  const [subject, setSubject] = useState(null) // 'math' | 'science' | 'geography'
   const [mathConfig, setMathConfig] = useState(null) // { mode, tables }
   const [scienceGrade, setScienceGrade] = useState(null)
+  const [geographyTopic, setGeographyTopic] = useState(null) // 'world' | 'us_states'
 
   const [stars, setStars] = useState(0)
   const [streak, setStreak] = useState(0)
@@ -73,6 +74,12 @@ export default function App() {
     setScreen('quiz')
   }
 
+  function handleStartGeography(topic) {
+    setGeographyTopic(topic)
+    setStreak(0)
+    setScreen('quiz')
+  }
+
   function handleCorrect() {
     setStreak((s) => {
       const next = s + 1
@@ -110,6 +117,13 @@ export default function App() {
     setScreen('home')
   }
 
+  function handleSwitchPlayer() {
+    persist(stars, bestStreak)
+    localStorage.removeItem('brainburst_player')
+    setPlayer('')
+    setScreen('home')
+  }
+
   return (
     <>
       {player && screen !== 'home' && (
@@ -119,7 +133,12 @@ export default function App() {
       )}
 
       {screen === 'home' && (
-        <Home player={player} onSetPlayer={handleSetPlayer} onPickSubject={handlePickSubject} />
+        <Home
+          player={player}
+          onSetPlayer={handleSetPlayer}
+          onPickSubject={handlePickSubject}
+          onSwitchPlayer={handleSwitchPlayer}
+        />
       )}
 
       {screen === 'picker' && (
@@ -128,6 +147,7 @@ export default function App() {
           onBack={() => setScreen('home')}
           onStartMath={handleStartMath}
           onStartScience={handleStartScience}
+          onStartGeography={handleStartGeography}
         />
       )}
 
@@ -136,6 +156,7 @@ export default function App() {
           subject={subject}
           mathConfig={mathConfig}
           scienceGrade={scienceGrade}
+          geographyTopic={geographyTopic}
           onCorrect={handleCorrect}
           onWrong={handleWrong}
           onFinish={handleFinish}
