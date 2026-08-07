@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react'
 import { generateMathQuestion } from '../data/mathData'
 import { getScienceQuestions } from '../data/scienceData'
 import { generateGeographyRound } from '../data/geographyData'
+import { getWordsQuestions } from '../data/wordsData'
 import DotArray from './DotArray'
+import MuteButton from './MuteButton'
+import { playCorrect, playWrong } from '../soundEffects'
 
 const QUESTIONS_PER_ROUND = 8
 
@@ -25,6 +28,24 @@ const THEME = {
     choiceIdle: 'bg-berry-50 border-berry-400 text-berry-500 hover:bg-berry-100',
     nextButton: 'bg-berry-500 hover:bg-berry-600',
   },
+  grape: {
+    topicLabel: 'text-grape-500',
+    choiceIdle: 'bg-grape-50 border-grape-300 text-grape-500 hover:bg-grape-100',
+    nextButton: 'bg-grape-500 hover:bg-grape-600',
+  },
+  sun: {
+    topicLabel: 'text-sun-600',
+    choiceIdle: 'bg-sun-50 border-sun-300 text-sun-600 hover:bg-sun-100',
+    nextButton: 'bg-sun-500 hover:bg-sun-600',
+  },
+}
+
+const THEME_BY_SUBJECT = {
+  math: 'leaf',
+  science: 'sky',
+  geography: 'berry',
+  words: 'grape',
+  daily: 'sun',
 }
 
 function shuffle(arr) {
@@ -54,16 +75,57 @@ function buildScienceRound(grade) {
   }))
 }
 
-export default function Quiz({ subject, mathConfig, scienceGrade, geographyTopic, onCorrect, onWrong, onFinish, onExit }) {
+function buildWordsRound(grade) {
+  const bank = getWordsQuestions(grade)
+  const picked = shuffle(bank).slice(0, Math.min(QUESTIONS_PER_ROUND, bank.length))
+  return picked.map((q) => ({
+    type: 'words',
+    prompt: q.question,
+    emoji: '📖',
+    answer: q.answer,
+    choices: shuffle(q.choices),
+    explanation: q.explanation,
+  }))
+}
+
+const MATH_MODES = ['addition', 'subtraction', 'multiplication', 'division', 'fraction', 'money']
+const GEO_TOPICS = ['world', 'us_states']
+const GRADES = [2, 3, 4, 5]
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+// A short mixed round pulling from every subject — used for the once-a-day
+// Daily Challenge, so it feels different from a regular practice round.
+function buildDailyRound() {
+  const parts = [
+    ...buildMathRound(pick(MATH_MODES), [2, 3, 4, 5, 6, 7, 8, 9, 10]).slice(0, 2),
+    ...buildScienceRound(pick(GRADES)).slice(0, 2),
+    ...generateGeographyRound(pick(GEO_TOPICS), 2),
+    ...buildWordsRound(pick(GRADES)).slice(0, 2),
+  ]
+  return shuffle(parts)
+}
+
+export default function Quiz({
+  subject,
+  mathConfig,
+  scienceGrade,
+  geographyTopic,
+  wordsGrade,
+  onCorrect,
+  onWrong,
+  onFinish,
+  onExit,
+}) {
   const questions = useMemo(() => {
-    if (subject === 'math') {
-      return buildMathRound(mathConfig.mode, mathConfig.tables)
-    }
-    if (subject === 'geography') {
-      return generateGeographyRound(geographyTopic, QUESTIONS_PER_ROUND)
-    }
+    if (subject === 'math') return buildMathRound(mathConfig.mode, mathConfig.tables)
+    if (subject === 'geography') return generateGeographyRound(geographyTopic, QUESTIONS_PER_ROUND)
+    if (subject === 'words') return buildWordsRound(wordsGrade)
+    if (subject === 'daily') return buildDailyRound()
     return buildScienceRound(scienceGrade)
-  }, [subject, mathConfig, scienceGrade, geographyTopic])
+  }, [subject, mathConfig, scienceGrade, geographyTopic, wordsGrade])
 
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState(null)
@@ -73,15 +135,17 @@ export default function Quiz({ subject, mathConfig, scienceGrade, geographyTopic
   const isLast = index === questions.length - 1
   const answered = selected !== null
   const isCorrect = answered && selected === q.answer
-  const theme = THEME[subject === 'math' ? 'leaf' : subject === 'geography' ? 'berry' : 'sky']
+  const theme = THEME[THEME_BY_SUBJECT[subject] || 'sky']
 
   function handleSelect(choice) {
     if (answered) return
     setSelected(choice)
     if (choice === q.answer) {
       setCorrectCount((c) => c + 1)
+      playCorrect()
       onCorrect()
     } else {
+      playWrong()
       onWrong()
     }
   }
@@ -104,6 +168,7 @@ export default function Quiz({ subject, mathConfig, scienceGrade, geographyTopic
         <span className="font-display font-bold text-gray-500">
           {index + 1} / {questions.length}
         </span>
+        <MuteButton />
       </div>
 
       <div className="w-full max-w-md bg-white rounded-3xl shadow-pop p-6 flex flex-col items-center">

@@ -1,4 +1,4 @@
-export default function Result({ correctCount, total, starsEarned, onPlayAgain, onHome }) {
+export default function Result({ correctCount, total, starsEarned, newBadges = [], onPlayAgain, onHome }) {
   const great = correctCount === total
   const good = correctCount >= total * 0.7
 
@@ -13,9 +13,23 @@ export default function Result({ correctCount, total, starsEarned, onPlayAgain, 
       <p className="font-body text-gray-600 mb-1">
         You got {correctCount} out of {total} right.
       </p>
-      <p className="font-display font-bold text-sun-500 text-lg mb-8">
+      <p className="font-display font-bold text-sun-500 text-lg mb-4">
         +{starsEarned} stars ⭐
       </p>
+
+      {newBadges.length > 0 && (
+        <div className="bg-white border-2 border-sun-500 rounded-2xl px-5 py-4 mb-6 animate-pop">
+          <p className="font-display font-bold text-gray-700 mb-2">New badge{newBadges.length > 1 ? 's' : ''}!</p>
+          <div className="flex gap-4 justify-center">
+            {newBadges.map((b) => (
+              <div key={b.id} className="flex flex-col items-center gap-1">
+                <span className="text-3xl">{b.emoji}</span>
+                <span className="font-body text-xs font-bold text-gray-600">{b.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <button

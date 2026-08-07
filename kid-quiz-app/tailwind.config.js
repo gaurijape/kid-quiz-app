@@ -21,8 +21,11 @@ export default {
           700: '#0f5fa3',
         },
         sun: {
+          50: '#fffbea',
+          100: '#fff3c4',
           300: '#ffe27a',
           500: '#ffc93c',
+          600: '#e3a91f',
         },
         berry: {
           50: '#fff0f4',
@@ -30,6 +33,14 @@ export default {
           400: '#ff6f91',
           500: '#ef476f',
           600: '#d43259',
+        },
+        grape: {
+          50: '#f5f0ff',
+          100: '#e6d9ff',
+          300: '#c49bff',
+          400: '#a970f5',
+          500: '#9147d6',
+          600: '#7a34b8',
         },
       },
       fontFamily: {

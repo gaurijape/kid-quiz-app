@@ -87,9 +87,74 @@ export function generateSubtractionQuestion() {
   }
 }
 
+// Simple, kid-friendly fractions — denominators a 3rd-5th grader can
+// visualize easily (halves, thirds, quarters, fifths, sixths, eighths,
+// tenths). Comparisons always have a clear winner (never truly equal
+// pairs), so "bigger" always has one right answer.
+const FRACTION_POOL = [
+  [1, 2], [1, 3], [2, 3], [1, 4], [2, 4], [3, 4],
+  [1, 5], [2, 5], [3, 5], [4, 5], [1, 6], [5, 6],
+  [1, 8], [3, 8], [5, 8], [7, 8], [1, 10], [3, 10], [7, 10], [9, 10],
+]
+
+export function generateFractionQuestion() {
+  let [n1, d1] = FRACTION_POOL[randInt(0, FRACTION_POOL.length - 1)]
+  let [n2, d2] = FRACTION_POOL[randInt(0, FRACTION_POOL.length - 1)]
+  // Avoid picking the exact same fraction twice
+  let guard = 0
+  while (n1 / d1 === n2 / d2 && guard < 10) {
+    ;[n2, d2] = FRACTION_POOL[randInt(0, FRACTION_POOL.length - 1)]
+    guard++
+  }
+  const fracA = `${n1}/${d1}`
+  const fracB = `${n2}/${d2}`
+  const answer = n1 / d1 > n2 / d2 ? fracA : fracB
+
+  return {
+    type: 'fraction',
+    prompt: `Which is bigger: ${fracA} or ${fracB}?`,
+    answer,
+    choices: shuffle([fracA, fracB]),
+    explanation: `${answer} is bigger. Try picturing a pizza cut into equal slices — a bigger fraction means a bigger slice.`,
+  }
+}
+
+// Money — count up a small handful of US coins.
+const COINS = [
+  { name: 'penny', value: 1, emoji: '🟤' },
+  { name: 'nickel', value: 5, emoji: '⚪' },
+  { name: 'dime', value: 10, emoji: '⚪' },
+  { name: 'quarter', value: 25, emoji: '🟡' },
+]
+
+export function generateMoneyQuestion() {
+  const count = randInt(3, 5)
+  const picked = Array.from({ length: count }, () => COINS[randInt(0, COINS.length - 1)])
+  const total = picked.reduce((sum, c) => sum + c.value, 0)
+  const summary = picked
+    .reduce((acc, c) => {
+      const existing = acc.find((x) => x.name === c.name)
+      if (existing) existing.count += 1
+      else acc.push({ name: c.name, count: 1, emoji: c.emoji })
+      return acc
+    }, [])
+    .map((c) => `${c.count} ${c.name}${c.count > 1 ? 's' : ''}`)
+    .join(', ')
+
+  return {
+    type: 'money',
+    prompt: `You have ${summary}. How many cents in all?`,
+    answer: total,
+    choices: buildChoices(total, 0, 150),
+    explanation: 'Pennies = 1¢, nickels = 5¢, dimes = 10¢, quarters = 25¢ — add them all up.',
+  }
+}
+
 export function generateMathQuestion(mode, tables) {
   if (mode === 'division') return generateDivisionQuestion(tables)
   if (mode === 'addition') return generateAdditionQuestion()
   if (mode === 'subtraction') return generateSubtractionQuestion()
+  if (mode === 'fraction') return generateFractionQuestion()
+  if (mode === 'money') return generateMoneyQuestion()
   return generateMultiplicationQuestion(tables)
 }
