@@ -5,8 +5,24 @@ import Quiz from './components/Quiz'
 import Result from './components/Result'
 import StarBar from './components/StarBar'
 import { loadProgress, saveProgress } from './supabaseClient'
+import { BADGES, getUnlockedBadgeIds } from './data/badges'
+import { playBadge } from './soundEffects'
 
-const STORAGE_KEY = 'brainburst_progress_v1'
+const STORAGE_KEY = 'brainburst_progress_v2'
+
+const DEFAULT_STATS = {
+  stars: 0,
+  bestStreak: 0,
+  roundsCompleted: 0,
+  perfectRounds: 0,
+  roundsBySubject: { math: 0, science: 0, geography: 0, words: 0 },
+  dailyChallengesCompleted: 0,
+  lastDailyDate: null,
+}
+
+function todayKey() {
+  return new Date().toDateString()
+}
 
 function loadLocal() {
   try {
@@ -16,40 +32,47 @@ function loadLocal() {
   }
 }
 
+function statsFor(all, player) {
+  const mine = all[player] || {}
+  return {
+    ...DEFAULT_STATS,
+    ...mine,
+    roundsBySubject: { ...DEFAULT_STATS.roundsBySubject, ...(mine.roundsBySubject || {}) },
+  }
+}
+
 export default function App() {
   const [player, setPlayer] = useState(() => localStorage.getItem('brainburst_player') || '')
   const [screen, setScreen] = useState('home') // home | picker | quiz | result
-  const [subject, setSubject] = useState(null) // 'math' | 'science' | 'geography'
+  const [subject, setSubject] = useState(null) // 'math' | 'science' | 'geography' | 'words' | 'daily'
   const [mathConfig, setMathConfig] = useState(null) // { mode, tables }
   const [scienceGrade, setScienceGrade] = useState(null)
   const [geographyTopic, setGeographyTopic] = useState(null) // 'world' | 'us_states'
+  const [wordsGrade, setWordsGrade] = useState(null)
 
-  const [stars, setStars] = useState(0)
+  const [stats, setStats] = useState(DEFAULT_STATS)
   const [streak, setStreak] = useState(0)
-  const [bestStreak, setBestStreak] = useState(0)
-  const [lastResult, setLastResult] = useState({ correctCount: 0, total: 0, starsEarned: 0 })
+  const [lastResult, setLastResult] = useState({ correctCount: 0, total: 0, starsEarned: 0, newBadges: [] })
 
-  // Load this player's saved progress (local first, then try cloud sync).
+  // Load this player's saved stats (local first, then try cloud sync for stars/streak).
   useEffect(() => {
     if (!player) return
     const all = loadLocal()
-    const mine = all[player] || { stars: 0, bestStreak: 0 }
-    setStars(mine.stars)
-    setBestStreak(mine.bestStreak)
+    const mine = statsFor(all, player)
+    setStats(mine)
     setStreak(0)
     loadProgress(player).then((cloud) => {
       if (cloud && cloud.stars > mine.stars) {
-        setStars(cloud.stars)
-        setBestStreak(Math.max(cloud.best_streak, mine.bestStreak))
+        setStats((s) => ({ ...s, stars: cloud.stars, bestStreak: Math.max(cloud.best_streak, s.bestStreak) }))
       }
     })
   }, [player])
 
-  function persist(nextStars, nextBestStreak) {
+  function persist(nextStats) {
     const all = loadLocal()
-    all[player] = { stars: nextStars, bestStreak: nextBestStreak }
+    all[player] = nextStats
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
-    saveProgress(player, nextStars, nextBestStreak)
+    saveProgress(player, nextStats.stars, nextStats.bestStreak)
   }
 
   function handleSetPlayer(name) {
@@ -63,19 +86,35 @@ export default function App() {
   }
 
   function handleStartMath(mode, tier) {
+    setSubject('math')
     setMathConfig({ mode, tables: tier ? tier.tables : [2, 3, 4, 5, 6, 7, 8, 9, 10] })
     setStreak(0)
     setScreen('quiz')
   }
 
   function handleStartScience(grade) {
+    setSubject('science')
     setScienceGrade(grade)
     setStreak(0)
     setScreen('quiz')
   }
 
   function handleStartGeography(topic) {
+    setSubject('geography')
     setGeographyTopic(topic)
+    setStreak(0)
+    setScreen('quiz')
+  }
+
+  function handleStartWords(grade) {
+    setSubject('words')
+    setWordsGrade(grade)
+    setStreak(0)
+    setScreen('quiz')
+  }
+
+  function handleStartDaily() {
+    setSubject('daily')
     setStreak(0)
     setScreen('quiz')
   }
@@ -83,10 +122,10 @@ export default function App() {
   function handleCorrect() {
     setStreak((s) => {
       const next = s + 1
-      setBestStreak((b) => Math.max(b, next))
+      setStats((st) => ({ ...st, bestStreak: Math.max(st.bestStreak, next) }))
       return next
     })
-    setStars((s) => s + 1)
+    setStats((st) => ({ ...st, stars: st.stars + 1 }))
   }
 
   function handleWrong() {
@@ -94,12 +133,34 @@ export default function App() {
   }
 
   function handleFinish(correctCount, total) {
-    // Bonus stars for a great round, on top of the 1-per-correct-answer already awarded live.
-    const bonus = correctCount === total ? 5 : correctCount >= total * 0.7 ? 2 : 0
-    const nextStars = stars + bonus
-    setStars(nextStars)
-    setLastResult({ correctCount, total, starsEarned: correctCount + bonus })
-    persist(nextStars, bestStreak)
+    const isPerfect = correctCount === total
+    const isDaily = subject === 'daily'
+    // Bonus stars for a great round, on top of the 1-per-correct already awarded live.
+    // Daily Challenge gets an extra flat bonus to make it worth coming back for.
+    const bonus = (isPerfect ? 5 : correctCount >= total * 0.7 ? 2 : 0) + (isDaily ? 10 : 0)
+
+    setStats((prev) => {
+      const beforeIds = getUnlockedBadgeIds(prev)
+      const nextStats = {
+        ...prev,
+        stars: prev.stars + bonus,
+        roundsCompleted: prev.roundsCompleted + 1,
+        perfectRounds: prev.perfectRounds + (isPerfect ? 1 : 0),
+        roundsBySubject: isDaily
+          ? prev.roundsBySubject
+          : { ...prev.roundsBySubject, [subject]: (prev.roundsBySubject[subject] || 0) + 1 },
+        dailyChallengesCompleted: prev.dailyChallengesCompleted + (isDaily ? 1 : 0),
+        lastDailyDate: isDaily ? todayKey() : prev.lastDailyDate,
+      }
+      const afterIds = getUnlockedBadgeIds(nextStats)
+      const newBadges = BADGES.filter((b) => afterIds.includes(b.id) && !beforeIds.includes(b.id))
+      if (newBadges.length > 0) playBadge()
+
+      setLastResult({ correctCount, total, starsEarned: correctCount + bonus, newBadges })
+      persist(nextStats)
+      return nextStats
+    })
+
     setScreen('result')
   }
 
@@ -113,22 +174,25 @@ export default function App() {
   }
 
   function handleExitQuiz() {
-    persist(stars, bestStreak)
+    persist(stats)
     setScreen('home')
   }
 
   function handleSwitchPlayer() {
-    persist(stars, bestStreak)
+    persist(stats)
     localStorage.removeItem('brainburst_player')
     setPlayer('')
     setScreen('home')
   }
 
+  const unlockedBadgeIds = getUnlockedBadgeIds(stats)
+  const dailyDone = stats.lastDailyDate === todayKey()
+
   return (
     <>
       {player && screen !== 'home' && (
         <div className="fixed top-4 right-4 z-10">
-          <StarBar stars={stars} streak={streak} bestStreak={bestStreak} />
+          <StarBar stars={stats.stars} streak={streak} bestStreak={stats.bestStreak} />
         </div>
       )}
 
@@ -138,6 +202,9 @@ export default function App() {
           onSetPlayer={handleSetPlayer}
           onPickSubject={handlePickSubject}
           onSwitchPlayer={handleSwitchPlayer}
+          onStartDaily={handleStartDaily}
+          dailyDone={dailyDone}
+          unlockedBadgeIds={unlockedBadgeIds}
         />
       )}
 
@@ -148,6 +215,7 @@ export default function App() {
           onStartMath={handleStartMath}
           onStartScience={handleStartScience}
           onStartGeography={handleStartGeography}
+          onStartWords={handleStartWords}
         />
       )}
 
@@ -157,6 +225,7 @@ export default function App() {
           mathConfig={mathConfig}
           scienceGrade={scienceGrade}
           geographyTopic={geographyTopic}
+          wordsGrade={wordsGrade}
           onCorrect={handleCorrect}
           onWrong={handleWrong}
           onFinish={handleFinish}
@@ -169,6 +238,7 @@ export default function App() {
           correctCount={lastResult.correctCount}
           total={lastResult.total}
           starsEarned={lastResult.starsEarned}
+          newBadges={lastResult.newBadges}
           onPlayAgain={handlePlayAgain}
           onHome={handleBackToHome}
         />

@@ -2,7 +2,7 @@ import { MULTIPLICATION_TIERS } from '../data/mathData'
 
 const GRADES = [2, 3, 4, 5]
 
-export default function Picker({ subject, onBack, onStartMath, onStartScience, onStartGeography }) {
+export default function Picker({ subject, onBack, onStartMath, onStartScience, onStartGeography, onStartWords }) {
   return (
     <div className="flex flex-col items-center min-h-screen bg-sky-field px-6 py-10">
       <button
@@ -25,6 +25,8 @@ export default function Picker({ subject, onBack, onStartMath, onStartScience, o
               <ModeButton label="Subtraction" emoji="➖" onClick={() => onStartMath('subtraction', null)} />
               <ModeButton label="Multiplication" emoji="✖️" onClick={() => onStartMath('multiplication', null)} />
               <ModeButton label="Division" emoji="➗" onClick={() => onStartMath('division', null)} />
+              <ModeButton label="Fractions" emoji="🍕" onClick={() => onStartMath('fraction', null)} />
+              <ModeButton label="Money" emoji="💰" onClick={() => onStartMath('money', null)} />
             </div>
           </div>
 
@@ -56,6 +58,25 @@ export default function Picker({ subject, onBack, onStartMath, onStartScience, o
                 key={g}
                 onClick={() => onStartScience(g)}
                 className="bg-white hover:bg-sky-50 border-2 border-sky-300 rounded-2xl py-8 font-display font-extrabold text-2xl text-sky-700 shadow-popSmall active:translate-y-1 active:shadow-none transition"
+              >
+                Grade {g}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {subject === 'words' && (
+        <>
+          <h2 className="font-display text-3xl font-extrabold text-grape-500 mb-6 text-center">
+            Pick your grade
+          </h2>
+          <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+            {GRADES.map((g) => (
+              <button
+                key={g}
+                onClick={() => onStartWords(g)}
+                className="bg-white hover:bg-grape-50 border-2 border-grape-300 rounded-2xl py-8 font-display font-extrabold text-2xl text-grape-500 shadow-popSmall active:translate-y-1 active:shadow-none transition"
               >
                 Grade {g}
               </button>
